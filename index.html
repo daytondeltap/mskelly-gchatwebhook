@@ -21,7 +21,7 @@
 <div style="height:20px"></div><button id="send" type="submit">Send to Google Chat</button><p id="status" class="status" role="status" aria-live="polite"></p>
 </form>
 </section>
-<div class="foot">Only authorized users can send messages. Your password is not saved by this page.</div>
+<div class="foot">Only authorized users can send messages. Your password is not saved by this page. Messages are relayed securely by Vercel.</div>
 </main>
 <script src="./config.js"></script>
 <script>
@@ -41,12 +41,12 @@ form.addEventListener("submit",async (event)=>{
  try{
   const apiBase=String(window.GCHAT_API_BASE||"").replace(/\/$/,"");
   if(!apiBase || !/^https:\/\//.test(apiBase)) throw new Error("This site is not connected yet. Ask the administrator to configure the message service.");
-  const response=await fetch(apiBase+"/api/send",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",credentials:"same-origin",body:JSON.stringify({password:pwd.value,message:msg.value})});
+  const response=await fetch(apiBase+"/api/send",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",credentials:"omit",body:JSON.stringify({password:pwd.value,message:msg.value})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||"Message could not be sent. Please try again.");
   status.textContent="Message sent successfully to Google Chat.";status.className="status success";
   msg.value="";counter.textContent="0 / 2000";document.getElementById("confirm").checked=false;
- }catch(error){status.textContent=error.message;status.className="status error";}
+ }catch(error){status.textContent=error instanceof TypeError?"Unable to reach the message service. Check your connection and try again.":error.message;status.className="status error";}
  finally{btn.disabled=false;btn.textContent="Send to Google Chat";}
 });
 })();
