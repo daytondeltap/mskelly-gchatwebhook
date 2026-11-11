@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Google Chat Messenger</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1020;color:#f4f7ff}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 0%,#21365e 0,transparent 42%),#0b1020}.shell{width:min(100%,570px)}.identity{display:flex;align-items:center;gap:13px;margin-bottom:24px}.logo{width:43px;height:43px;border-radius:14px;display:grid;place-items:center;background:#78e8c1;color:#0b1020;font-size:24px;font-weight:900}.eyebrow{font-size:12px;letter-spacing:.11em;text-transform:uppercase;color:#98a9c5;font-weight:800}.identity h1{font-size:22px;letter-spacing:-.03em;margin:2px 0 0}.panel{background:#151e31;border:1px solid #34415a;border-radius:22px;padding:clamp(20px,5vw,34px);box-shadow:0 22px 80px #0005}h2{margin:0 0 7px;font-size:25px;letter-spacing:-.04em}p{line-height:1.55}.intro{color:#b5c2d8;margin:0 0 28px;font-size:14px}label{display:block;font-size:13px;font-weight:750;margin-bottom:9px;color:#e8efff}.field{margin-bottom:22px}input,textarea{width:100%;background:#0d1526;color:#fff;border:1px solid #4b5a74;border-radius:12px;padding:14px 15px;font:inherit;font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s}input:focus,textarea:focus{border-color:#78e8c1;box-shadow:0 0 0 3px #78e8c122}textarea{resize:vertical;min-height:155px;line-height:1.55}input::placeholder,textarea::placeholder{color:#8e9db4}.hint{margin-top:7px;font-size:12px;color:#a5b4cd}.bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 20px}.count{font-size:12px;color:#aab9cf}.checkbox{display:flex;align-items:center;gap:9px;margin:0;color:#b5c2d8;font-weight:500;font-size:12px}.checkbox input{width:16px;height:16px;accent-color:#78e8c1}button{width:100%;padding:15px 18px;border:0;border-radius:12px;font:inherit;font-weight:800;font-size:15px;background:#78e8c1;color:#09221b;cursor:pointer;transition:filter .15s}button:hover:not(:disabled){filter:brightness(1.08)}button:focus-visible{outline:3px solid #fff;outline-offset:3px}button:disabled{opacity:.6;cursor:not-allowed}.status{min-height:20px;margin:18px 0 0;font-size:13px;color:#bfcee4}.status.success{color:#91f2c2}.status.error{color:#ffadad}.foot{margin:20px 4px;text-align:center;color:#97a9c3;font-size:12px;line-height:1.6}@media(max-width:450px){body{padding:17px}.bottom{align-items:flex-start}.panel{border-radius:17px}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="identity"><div class="logo" aria-hidden="true">↗</div><div><div class="eyebrow">Secure message portal</div><h1>Google Chat Messenger</h1></div></header>
+<section class="panel" aria-labelledby="heading">
+<h2 id="heading">Send a message</h2><p class="intro">Write a message and send it to the connected Google Chat space. Messages are one-way; replies will appear in Google Chat, not here.</p>
+<form id="sendForm">
+<div class="field"><label for="password">Access password</label><input id="password" name="password" type="password" autocomplete="off" required minlength="12" placeholder="Enter your shared access password"><div class="hint">Provided by the administrator. Never share it publicly.</div></div>
+<div class="field"><label for="message">Your message</label><textarea id="message" name="message" required maxlength="2000" placeholder="Type your message here…" aria-describedby="counter"></textarea><div class="bottom"><span class="hint">Plain-text messages only</span><span id="counter" class="count" aria-live="off">0 / 2000</span></div></div>
+<label class="checkbox" for="confirm"><input id="confirm" type="checkbox" required> I understand this will post to a shared Google Chat space.</label>
+<div style="height:20px"></div><button id="send" type="submit">Send to Google Chat</button><p id="status" class="status" role="status" aria-live="polite"></p>
+</form>
+</section>
+<div class="foot">Only authorized users can send messages. Your password is not saved by this page.</div>
+</main>
+<script>
+(function(){
+"use strict";
+const form=document.getElementById("sendForm");
+const msg=document.getElementById("message");
+const pwd=document.getElementById("password");
+const status=document.getElementById("status");
+const btn=document.getElementById("send");
+const counter=document.getElementById("counter");
+msg.addEventListener("input",()=>{counter.textContent=msg.value.length+" / 2000";});
+form.addEventListener("submit",async (event)=>{
+ event.preventDefault();
+ if(!form.reportValidity())return;
+ btn.disabled=true;btn.textContent="Sending…";status.textContent="Sending your message…";status.className="status";
+ try{
+  const response=await fetch("/api/send",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",credentials:"same-origin",body:JSON.stringify({password:pwd.value,message:msg.value})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||"Message could not be sent. Please try again.");
+  status.textContent="Message sent successfully to Google Chat.";status.className="status success";
+  msg.value="";counter.textContent="0 / 2000";document.getElementById("confirm").checked=false;
+ }catch(error){status.textContent=error.message;status.className="status error";}
+ finally{btn.disabled=false;btn.textContent="Send to Google Chat";}
+});
+})();
+</script>
+</body></html>
