@@ -23,6 +23,7 @@
 </section>
 <div class="foot">Only authorized users can send messages. Your password is not saved by this page.</div>
 </main>
+<script src="./config.js"></script>
 <script>
 (function(){
 "use strict";
@@ -38,7 +39,9 @@ form.addEventListener("submit",async (event)=>{
  if(!form.reportValidity())return;
  btn.disabled=true;btn.textContent="Sending…";status.textContent="Sending your message…";status.className="status";
  try{
-  const response=await fetch("/api/send",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",credentials:"same-origin",body:JSON.stringify({password:pwd.value,message:msg.value})});
+  const apiBase=String(window.GCHAT_API_BASE||"").replace(/\/$/,"");
+  if(!apiBase || !/^https:\/\//.test(apiBase)) throw new Error("This site is not connected yet. Ask the administrator to configure the message service.");
+  const response=await fetch(apiBase+"/api/send",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",credentials:"same-origin",body:JSON.stringify({password:pwd.value,message:msg.value})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||"Message could not be sent. Please try again.");
   status.textContent="Message sent successfully to Google Chat.";status.className="status success";
