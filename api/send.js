@@ -47,8 +47,19 @@ async function quota(key, periodMs, limit) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader("Allow", "POST");
+  res.setHeader("Allow", "POST, OPTIONS");
   res.setHeader("Referrer-Policy", "no-referrer");
+  const origin = req.headers.origin;
+  const publicOrigin = process.env.PUBLIC_ORIGIN;
+  if (publicOrigin && origin === publicOrigin) {
+    res.setHeader("Access-Control-Allow-Origin", publicOrigin);
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Vary", "Origin");
+  }
+  if (req.method === "OPTIONS") {
+    return origin && publicOrigin && origin === publicOrigin ? res.status(204).end() : respond(res, 403, { error: "Origin not permitted." });
+  }
   if (req.method !== "POST") return respond(res, 405, { error: "Use POST to send a message." });
 
   const required = ["GOOGLE_CHAT_WEBHOOK_URL", "SEND_PASSWORD", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"];
@@ -57,9 +68,7 @@ module.exports = async function handler(req, res) {
     return respond(res, 503, { error: "Service is not configured. Contact the administrator." });
   }
 
-  const origin = req.headers.origin;
-  const publicOrigin = process.env.PUBLIC_ORIGIN || ("https://" + req.headers.host);
-  if (!origin || origin !== publicOrigin) return respond(res, 403, { error: "This request must come from the website." });
+  if (!origin || !publicOrigin || origin !== publicOrigin) return respond(res, 403, { error: "This request must come from the website." });
   if (!/^application\/json(?:\s*;|$)/i.test(req.headers["content-type"] || "")) {
     return respond(res, 415, { error: "Unsupported request format." });
   }
